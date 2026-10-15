@@ -14,35 +14,51 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+    "https://interly-ai-client.onrender.com",
+    "http://localhost:5173"
+];
+
 app.use(
-  cors({
-    origin: "https://interly-ai-client.onrender.com",
-    credentials: true,
-  })
+    cors({
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Origin not allowed by CORS"));
+        },
+        credentials: true
+    })
 );
 
 app.use(express.json());
 app.use(cookieParser());
 
-// API routes
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/interview", interviewRouter);
 app.use("/api/payment", paymentRouter);
 
+app.get("/", (req, res) => {
+    res.status(200).json({
+        message: "INTERLY-AI backend is running"
+    });
+});
+
 const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
-  try {
-    await connectDb();
+    try {
+        await connectDb();
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
 };
 
 startServer();
